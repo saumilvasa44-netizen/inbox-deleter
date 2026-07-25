@@ -3,13 +3,14 @@ import { JWT } from "next-auth/jwt";
 import GoogleProvider from "next-auth/providers/google";
 import { google } from "googleapis";
 
-// Full mailbox access — this is the one scope that can permanently delete
-// mail (batchDelete), which gmail.readonly / gmail.modify cannot do. This is
-// a *restricted* Google scope: fine to use while the OAuth consent screen
-// stays in Testing mode with yourself (and whoever else you're deleting for)
-// added as test users, same as the rest of this project's setup. See
-// README.md for the exact Google Cloud Console steps.
-const GMAIL_FULL_SCOPE = "https://mail.google.com/";
+// gmail.modify — enough to list, label, and move mail to Trash, but Google
+// explicitly excludes permanent/bypass-Trash deletion from this scope (that
+// needs the restricted `https://mail.google.com/` scope instead, which
+// requires an annual CASA security assessment to verify for public use).
+// Deliberately staying on this narrower, "sensitive" (not "restricted")
+// scope so the app can go through Google's standard, free verification and
+// be signed into by anyone — not just test users. See README.md.
+const GMAIL_MODIFY_SCOPE = "https://www.googleapis.com/auth/gmail.modify";
 
 // No database anywhere in this app, by design — the access/refresh tokens
 // live only inside the encrypted NextAuth JWT session cookie (encrypted
@@ -50,7 +51,7 @@ export const authOptions: NextAuthOptions = {
           // sign-in — deliberate here, since this app should never silently
           // reuse a stale grant for something this destructive.
           prompt: "consent",
-          scope: `openid email profile ${GMAIL_FULL_SCOPE}`,
+          scope: `openid email profile ${GMAIL_MODIFY_SCOPE}`,
         },
       },
     }),
@@ -63,20 +64,17 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, account }) {
       // Initial sign-in: persist tokens from the OAuth grant.
       if (account) {
-        // Google can silently drop the full-mailbox scope even when sign-in
-        // otherwise "succeeds" — it renders as a separate, easy-to-miss
-        // checkbox on the consent screen for restricted scopes like this
-        // one. Check what was actually granted so we can tell the user
-        // clearly, instead of every delete action failing later with an
-        // opaque "Insufficient Permission" error.
+        // Check what was actually granted so we can tell the user clearly,
+        // instead of every trash action failing later with an opaque
+        // "Insufficient Permission" error.
         const grantedScopes = (account.scope ?? "").split(" ");
-        const hasFullAccess = grantedScopes.includes(GMAIL_FULL_SCOPE);
+        const hasModifyAccess = grantedScopes.includes(GMAIL_MODIFY_SCOPE);
         return {
           ...token,
           accessToken: account.access_token,
           accessTokenExpires: account.expires_at ? account.expires_at * 1000 : Date.now() + 3600 * 1000,
           refreshToken: account.refresh_token,
-          error: hasFullAccess ? undefined : "InsufficientScopeError",
+          error: hasModifyAccess ? undefined : "InsufficientScopeError",
         };
       }
       // Still valid — reuse it.
@@ -95,4 +93,4 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
-export { GMAIL_FULL_SCOPE };
+export { GMAIL_MODIFY_SCOPE };

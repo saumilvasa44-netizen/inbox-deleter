@@ -2,38 +2,38 @@
 
 import { useState } from "react";
 
-type ActionKey = "delete-all" | "trash-all" | "delete-primary";
+type ActionKey = "trash-all" | "trash-except-starred" | "trash-primary";
 
 const ACTIONS: Record<
   ActionKey,
   { title: string; description: string; endpoint: string; countScope: "all" | "primary"; verb: string; permanent: boolean }
 > = {
-  "delete-all": {
-    title: "1. Delete everything",
-    description:
-      "Permanently deletes every message in this mailbox — inbox, sent, drafts, spam, and trash. Bypasses Trash entirely. There is no undo.",
-    endpoint: "/api/actions/delete-all",
-    countScope: "all",
-    verb: "permanently deleted",
-    permanent: true,
-  },
   "trash-all": {
-    title: "2. Delete everything, but move to Trash",
+    title: "1. Move everything to Trash",
     description:
-      "Moves every message not already in Trash into Trash. Recoverable for about 30 days before Gmail auto-purges it.",
+      "Moves every message not already in Trash into Trash — inbox, sent, drafts, spam, all of it. Recoverable for about 30 days before Gmail auto-purges it.",
     endpoint: "/api/actions/trash-all",
     countScope: "all",
     verb: "moved to Trash",
     permanent: false,
   },
-  "delete-primary": {
-    title: "3. Delete only Primary inbox emails",
+  "trash-except-starred": {
+    title: "2. Move everything to Trash, except starred",
     description:
-      "Permanently deletes only messages in Gmail's Primary category tab. Promotions, Social, Updates, Forums, Spam, and Trash are left untouched. There is no undo.",
-    endpoint: "/api/actions/delete-primary",
+      "Moves every message not already in Trash into Trash, skipping anything you've starred. Recoverable for about 30 days before Gmail auto-purges it.",
+    endpoint: "/api/actions/trash-except-starred",
+    countScope: "all",
+    verb: "moved to Trash",
+    permanent: false,
+  },
+  "trash-primary": {
+    title: "3. Move Primary inbox emails to Trash",
+    description:
+      "Moves only messages in Gmail's Primary category tab into Trash. Promotions, Social, Updates, Forums, Spam, and already-trashed messages are left untouched. Recoverable for about 30 days.",
+    endpoint: "/api/actions/trash-primary",
     countScope: "primary",
-    verb: "permanently deleted",
-    permanent: true,
+    verb: "moved to Trash",
+    permanent: false,
   },
 };
 

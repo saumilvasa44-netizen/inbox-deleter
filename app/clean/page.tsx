@@ -28,10 +28,10 @@ export default async function CleanPage() {
 
         {session.error === "InsufficientScopeError" && (
           <div className="bg-bad/15 text-bad text-sm rounded-lg px-4 py-3 space-y-2">
-            <p className="font-medium">Full Gmail access wasn&apos;t granted during sign-in.</p>
+            <p className="font-medium">Gmail access wasn&apos;t granted during sign-in.</p>
             <p>
               Google shows this as a separate checkbox/toggle on the consent screen (something like
-              &quot;See, edit, create, and permanently delete all your email from Gmail&quot;) — it&apos;s
+              &quot;Read, compose, send, and permanently delete all your email from Gmail&quot;) — it&apos;s
               easy to miss. Click &quot;Sign out&quot; above, sign in again, and make sure that
               permission is explicitly checked before continuing.
             </p>

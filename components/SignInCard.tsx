@@ -7,8 +7,8 @@ export default function SignInCard() {
     <div className="bg-panel border border-border rounded-2xl p-8 max-w-md w-full text-center space-y-4">
       <div className="text-2xl font-semibold">Inbox Deleter</div>
       <p className="text-sm text-muted">
-        Signs in with Google, then lets you permanently delete or trash an entire mailbox. This
-        requests full Gmail account access — only sign in with an account you intend to act on.
+        Signs in with Google, then lets you bulk-move an entire mailbox to Trash. Only sign in
+        with an account you intend to act on.
       </p>
       <button
         onClick={() => signIn("google", { callbackUrl: "/clean" })}

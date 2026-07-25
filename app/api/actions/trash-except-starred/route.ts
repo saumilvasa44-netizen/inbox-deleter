@@ -6,10 +6,9 @@ import { trashBatch } from "@/lib/mailbox-actions";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-// Superseded by /api/actions/trash-except-starred (same logic, kept here as
-// an alias since this path can't be removed from the deployed workspace).
-// No longer does a permanent/bypass-Trash delete — this app only requests
-// the `gmail.modify` scope now, which can't do that. See lib/mailbox-actions.ts.
+// Moves one page (up to 500) of everything not already in Trash AND not
+// starred into Trash. Recoverable for ~30 days. The client calls this
+// repeatedly until processed comes back 0.
 export async function POST() {
   const auth = await requireAccessToken();
   if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: 401 });

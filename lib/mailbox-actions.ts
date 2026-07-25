@@ -22,23 +22,23 @@ async function listBatchIds(gmail: gmail_v1.Gmail, query: string | undefined): P
   return (res.data.messages ?? []).map((m) => m.id).filter((id): id is string => Boolean(id));
 }
 
-// Permanently deletes up to one page of messages matching `query` (undefined
-// = everything, inbox/sent/spam/trash/all of it). No undo.
-export async function deleteBatch(gmail: gmail_v1.Gmail, query?: string): Promise<BatchResult> {
+// Moves up to one page of matching messages into Trash (30-day recoverable
+// window before Gmail auto-purges it). `-in:trash` is always appended and is
+// load-bearing: without it, already-trashed messages would keep getting
+// re-listed forever (adding the TRASH label to an already-trashed message is
+// a harmless no-op, so the pool of matching ids would never shrink and the
+// caller's loop would never terminate). `extraQuery` narrows which messages
+// are targeted (e.g. exclude starred, or restrict to Primary category).
+//
+// Deliberately uses batchModify (add TRASH label), never batchDelete —
+// batchDelete requires the restricted `https://mail.google.com/` scope and
+// Google's CASA security assessment to verify for public use. This app
+// requests only `gmail.modify`, so permanent/bypass-Trash deletion is not
+// offered anywhere in this app; users who want that can empty Trash inside
+// Gmail itself.
+export async function trashBatch(gmail: gmail_v1.Gmail, extraQuery?: string): Promise<BatchResult> {
+  const query = extraQuery ? `-in:trash ${extraQuery}` : "-in:trash";
   const ids = await listBatchIds(gmail, query);
-  if (ids.length === 0) return { processed: 0, hasMore: false };
-  await gmail.users.messages.batchDelete({ userId: "me", requestBody: { ids } });
-  return { processed: ids.length, hasMore: true };
-}
-
-// Moves everything not already in Trash into Trash (30-day recoverable
-// window before Gmail auto-purges it). The "-in:trash" exclusion is load-
-// bearing: without it, already-trashed messages would keep getting
-// re-listed forever (adding the TRASH label to an already-trashed message
-// is a harmless no-op, so the pool of matching ids would never shrink and
-// the caller's loop would never terminate).
-export async function trashBatch(gmail: gmail_v1.Gmail): Promise<BatchResult> {
-  const ids = await listBatchIds(gmail, "-in:trash");
   if (ids.length === 0) return { processed: 0, hasMore: false };
   await gmail.users.messages.batchModify({
     userId: "me",
