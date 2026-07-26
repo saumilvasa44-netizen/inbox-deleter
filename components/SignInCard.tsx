@@ -20,6 +20,11 @@ export default function SignInCard() {
         Nothing is stored. Your access token lives only in this browser session and is discarded
         on sign out.
       </p>
+      <p className="text-xs text-muted">
+        <a href="/privacy" className="underline hover:text-white">Privacy Policy</a>
+        {" · "}
+        <a href="/terms" className="underline hover:text-white">Terms of Service</a>
+      </p>
     </div>
   );
 }
